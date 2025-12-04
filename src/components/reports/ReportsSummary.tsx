@@ -1,7 +1,7 @@
 // Компонент підсумкової статистики по drill
 "use client"
 
-import { memo, useMemo } from 'react'
+import { memo, useMemo, useState, useEffect } from 'react'
 import type { UserDrillDto } from '@/types/api.types'
 import {
   formatDurationHMS,
@@ -23,7 +23,22 @@ interface DrillSummary {
 }
 
 function ReportsSummary({ userDrills }: ReportsSummaryProps) {
-  // Групуємо записи по drill та рахуємо підсумки
+  // Таймер для live-оновлення
+  const [tick, setTick] = useState(0)
+
+  // Оновлюємо кожну секунду якщо є активні записи
+  useEffect(() => {
+    const hasActiveRecords = userDrills.some((r) => r.stoppedAt === null)
+    if (!hasActiveRecords) return
+
+    const interval = setInterval(() => {
+      setTick((prev) => prev + 1)
+    }, 1000)
+
+    return () => clearInterval(interval)
+  }, [userDrills])
+
+  // Групуємо записи по drill та рахуємо підсумки (з live-оновленням)
   const drillSummaries = useMemo(() => {
     const summaryMap = new Map<number, DrillSummary>()
 
@@ -53,7 +68,7 @@ function ReportsSummary({ userDrills }: ReportsSummaryProps) {
     return Array.from(summaryMap.values()).sort((a, b) =>
       a.drillTitle.localeCompare(b.drillTitle, 'uk-UA')
     )
-  }, [userDrills])
+  }, [userDrills, tick]) // Додали tick для оновлення
 
   // Загальні підсумки
   const totals = useMemo(() => {
@@ -68,21 +83,21 @@ function ReportsSummary({ userDrills }: ReportsSummaryProps) {
   }, [drillSummaries])
 
   return (
-    <div className="bg-white rounded-lg shadow-md overflow-hidden">
+    <div className="bg-white rounded-lg shadow-md border border-gray-200 overflow-hidden">
       <div className="overflow-x-auto">
         <table className="min-w-full divide-y divide-gray-200">
-          <thead className="bg-gray-50">
+          <thead className="bg-gray-100 border-b-2 border-gray-300">
             <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
                 Drill
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
                 Кількість сесій
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
                 Загальний час
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
                 Загальна вартість
               </th>
             </tr>

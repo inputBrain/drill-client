@@ -12,9 +12,11 @@ export function useUserDrills(filter: FilterType = 'all') {
   const [error, setError] = useState<string | null>(null)
 
   // Завантажити записи згідно з фільтром
-  const fetchUserDrills = useCallback(async () => {
+  const fetchUserDrills = useCallback(async (showLoading = false) => {
     try {
-      setLoading(true)
+      if (showLoading) {
+        setLoading(true)
+      }
       let data: UserDrillDto[]
 
       if (filter === 'active') {
@@ -30,22 +32,26 @@ export function useUserDrills(filter: FilterType = 'all') {
     } catch (err: any) {
       const errorMsg = err?.message || 'Помилка завантаження історії'
       setError(errorMsg)
-      toast.error(errorMsg)
+      if (showLoading) {
+        toast.error(errorMsg)
+      }
     } finally {
-      setLoading(false)
+      if (showLoading) {
+        setLoading(false)
+      }
     }
   }, [filter])
 
-  // Завантажити при монтуванні та зміні фільтру
+  // Завантажити при монтуванні та зміні фільтру (з loading)
   useEffect(() => {
-    fetchUserDrills()
+    fetchUserDrills(true)
   }, [fetchUserDrills])
 
-  // Автоматична синхронізація кожні 10 секунд
+  // Автоматична синхронізація кожні 30 хвилин (БЕЗ loading, тихе оновлення)
   useEffect(() => {
     const interval = setInterval(() => {
-      fetchUserDrills()
-    }, 10000)
+      fetchUserDrills(false) // false = не показувати loading
+    }, 1800000) // 30 хвилин
 
     return () => clearInterval(interval)
   }, [fetchUserDrills])

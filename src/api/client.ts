@@ -18,17 +18,6 @@ export const apiClient: AxiosInstance = axios.create({
 apiClient.interceptors.response.use(
   (response) => response,
   (error: AxiosError) => {
-    // Детальне логування для діагностики
-    console.error('=== FULL ERROR OBJECT ===')
-    console.error('error:', error)
-    console.error('error.message:', error.message)
-    console.error('error.code:', error.code)
-    console.error('error.config?.url:', error.config?.url)
-    console.error('error.config?.baseURL:', error.config?.baseURL)
-    console.error('error.response?.status:', error.response?.status)
-    console.error('error.response?.data:', error.response?.data)
-    console.error('========================')
-
     let errorMessage = 'Network error'
 
     if (error.response?.data) {
@@ -49,13 +38,15 @@ apiClient.interceptors.response.use(
       statusCode: error.response?.status,
     }
 
-    console.error('API Error:', {
-      url: error.config?.url,
-      method: error.config?.method,
-      status: error.response?.status,
-      message: errorMessage,
-      data: error.response?.data,
-    })
+    // Логування тільки для development
+    if (process.env.NODE_ENV === 'development') {
+      console.error('API Error:', {
+        url: error.config?.url,
+        method: error.config?.method,
+        status: error.response?.status,
+        message: errorMessage,
+      })
+    }
 
     return Promise.reject(apiError)
   }

@@ -1,9 +1,10 @@
 "use client"
 
+import { memo } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 
-export default function Header() {
+function Header() {
   const pathname = usePathname()
 
   return (
@@ -44,3 +45,5 @@ export default function Header() {
     </header>
   )
 }
+
+export default memo(Header)

@@ -1,7 +1,7 @@
 // Компонент таблиці з історією drill сесій
 "use client"
 
-import { memo, useMemo } from 'react'
+import { memo, useMemo, useState, useEffect } from 'react'
 import type { UserDrillDto } from '@/types/api.types'
 import {
   formatTimestampFull,
@@ -21,8 +21,16 @@ interface ReportsTableProps {
 // Окремий компонент для активного рядка з таймером
 const ActiveRow = memo(({ record }: { record: UserDrillDto }) => {
   const { formatted, durationSeconds } = useTimer(record.startedAt, record.stoppedAt)
-  const durationMinutes = Math.floor(durationSeconds / 60)
-  const cost = calculateCost(durationMinutes, record.drill.pricePerMinute)
+
+  const durationMinutes = useMemo(
+    () => Math.floor(durationSeconds / 60),
+    [durationSeconds]
+  )
+
+  const cost = useMemo(
+    () => calculateCost(durationMinutes, record.drill.pricePerMinute),
+    [durationMinutes, record.drill.pricePerMinute]
+  )
 
   return (
     <tr className="hover:bg-gray-50 transition-colors">
@@ -98,13 +106,28 @@ const CompletedRow = memo(({ record }: { record: UserDrillDto }) => {
 CompletedRow.displayName = 'CompletedRow'
 
 function ReportsTable({ userDrills, groupedData }: ReportsTableProps) {
+  // Таймер для live-оновлення загального підсумку
+  const [tick, setTick] = useState(0)
+
   // Сортуємо записи за часом (новіші зверху)
   const sortedRecords = useMemo(
     () => [...userDrills].sort((a, b) => b.startedAt - a.startedAt),
     [userDrills]
   )
 
-  // Обчислюємо загальний підсумок
+  // Оновлюємо кожну секунду якщо є активні записи
+  useEffect(() => {
+    const hasActiveRecords = sortedRecords.some((r) => r.stoppedAt === null)
+    if (!hasActiveRecords) return
+
+    const interval = setInterval(() => {
+      setTick((prev) => prev + 1)
+    }, 1000)
+
+    return () => clearInterval(interval)
+  }, [sortedRecords])
+
+  // Обчислюємо загальний підсумок (з live-оновленням через tick)
   const grandTotal = useMemo(() => {
     let totalSeconds = 0
     let totalCost = 0
@@ -123,7 +146,7 @@ function ReportsTable({ userDrills, groupedData }: ReportsTableProps) {
       duration: formatDurationHMS(totalSeconds),
       cost: formatCost(totalCost),
     }
-  }, [sortedRecords])
+  }, [sortedRecords, tick]) // Додали tick для оновлення
 
   // Обчислюємо підсумки по групах (користувач + drill)
   const groupSummaries = useMemo(() => {
@@ -159,30 +182,30 @@ function ReportsTable({ userDrills, groupedData }: ReportsTableProps) {
   }, [groupedData])
 
   return (
-    <div className="bg-white rounded-lg shadow-md overflow-hidden">
+    <div className="bg-white rounded-lg shadow-md border border-gray-200 overflow-hidden">
       <div className="overflow-x-auto">
         <table className="min-w-full divide-y divide-gray-200">
-          <thead className="bg-gray-50">
+          <thead className="bg-gray-100 border-b-2 border-gray-300">
             <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
                 Користувач
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
                 Drill
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
                 Початок
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
                 Зупинка
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
                 Тривалість
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
                 Ціна/хв
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
                 Вартість
               </th>
             </tr>

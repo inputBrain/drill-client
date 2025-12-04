@@ -8,10 +8,24 @@ import { uk } from 'date-fns/locale'
 const KYIV_TIMEZONE = 'Europe/Kiev'
 
 /**
- * Конвертує Unix timestamp (мілісекунди) в Date об'єкт у timezone UTC+2
+ * Нормалізує timestamp: якщо в секундах, конвертує в мілісекунди
+ * Unix timestamp в секундах < 10000000000 (20 листопада 2286)
+ * Unix timestamp в мілісекундах >= 10000000000
+ */
+export function normalizeTimestamp(timestamp: number): number {
+  // Якщо менше 10 мільярдів, то це секунди - конвертуємо в мілісекунди
+  if (timestamp < 10000000000) {
+    return timestamp * 1000
+  }
+  return timestamp
+}
+
+/**
+ * Конвертує Unix timestamp (секунди або мілісекунди) в Date об'єкт у timezone UTC+2
  */
 export function timestampToKyivDate(timestamp: number): Date {
-  const date = new Date(timestamp)
+  const normalizedTimestamp = normalizeTimestamp(timestamp)
+  const date = new Date(normalizedTimestamp)
   return toZonedTime(date, KYIV_TIMEZONE)
 }
 
@@ -46,8 +60,9 @@ export function formatTimestampDate(timestamp: number): string {
  * Обчислює тривалість між двома timestamp (в секундах)
  */
 export function calculateDurationSeconds(startTimestamp: number, endTimestamp?: number): number {
-  const end = endTimestamp || Date.now()
-  const durationMs = end - startTimestamp
+  const start = normalizeTimestamp(startTimestamp)
+  const end = endTimestamp ? normalizeTimestamp(endTimestamp) : Date.now()
+  const durationMs = end - start
   return Math.floor(durationMs / 1000)
 }
 

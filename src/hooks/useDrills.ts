@@ -15,31 +15,37 @@ export function useDrills() {
   const [error, setError] = useState<string | null>(null)
 
   // Завантажити список drill
-  const fetchDrills = useCallback(async () => {
+  const fetchDrills = useCallback(async (showLoading = false) => {
     try {
-      setLoading(true)
+      if (showLoading) {
+        setLoading(true)
+      }
       const data = await getDrillList()
       setDrills(data)
       setError(null)
     } catch (err: any) {
       const errorMsg = err?.message || 'Помилка завантаження drill'
       setError(errorMsg)
-      toast.error(errorMsg)
+      if (showLoading) {
+        toast.error(errorMsg)
+      }
     } finally {
-      setLoading(false)
+      if (showLoading) {
+        setLoading(false)
+      }
     }
   }, [])
 
-  // Завантажити при монтуванні
+  // Завантажити при монтуванні (з loading)
   useEffect(() => {
-    fetchDrills()
+    fetchDrills(true)
   }, [fetchDrills])
 
-  // Автоматична синхронізація кожні 5 секунд для оновлення активних користувачів
+  // Автоматична синхронізація кожні 30 хвилин (БЕЗ loading, тихе оновлення)
   useEffect(() => {
     const interval = setInterval(() => {
-      fetchDrills()
-    }, 5000)
+      fetchDrills(false) // false = не показувати loading
+    }, 1800000) // 30 хвилин
 
     return () => clearInterval(interval)
   }, [fetchDrills])

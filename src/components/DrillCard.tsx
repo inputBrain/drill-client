@@ -1,7 +1,7 @@
 // Компонент картки Drill з функціоналом Start/Stop
 "use client"
 
-import { memo, useState, useCallback } from 'react'
+import { memo, useState, useCallback, useRef, useEffect } from 'react'
 import type { DrillDto, UserDto } from '@/types/api.types'
 import UserSelector from './UserSelector'
 import UserTimer from './UserTimer'
@@ -10,17 +10,41 @@ import { formatCost } from '@/utils/date.utils'
 interface DrillCardProps {
   drill: DrillDto
   allUsers: UserDto[]
+  userStartTimes?: Map<number, number> // userId -> startedAt
   onStart: (drillId: number, userIds: number[]) => Promise<void>
   onStop: (drillId: number, userIds: number[]) => Promise<void>
 }
 
-function DrillCard({ drill, allUsers, onStart, onStop }: DrillCardProps) {
+function DrillCard({ drill, allUsers, userStartTimes, onStart, onStop }: DrillCardProps) {
   const [selectedUserIds, setSelectedUserIds] = useState<number[]>([])
   const [isStarting, setIsStarting] = useState(false)
   const [isStopping, setIsStopping] = useState(false)
 
+  // Локальний кеш часів старту для стабільності (щоб не втрачати під час оновлень)
+  const startTimesCache = useRef<Map<number, number>>(new Map())
+
   const activeUsers = drill.users || []
   const hasActiveUsers = activeUsers.length > 0
+
+  // Оновлюємо кеш з userStartTimes коли вони приходять
+  useEffect(() => {
+    if (userStartTimes) {
+      userStartTimes.forEach((timestamp, userId) => {
+        // Зберігаємо час старту тільки якщо його ще немає в кеші
+        if (!startTimesCache.current.has(userId)) {
+          startTimesCache.current.set(userId, timestamp)
+        }
+      })
+    }
+
+    // Очищаємо кеш для користувачів які більше не активні
+    const activeUserIds = new Set(activeUsers.map(u => u.id))
+    startTimesCache.current.forEach((_, userId) => {
+      if (!activeUserIds.has(userId)) {
+        startTimesCache.current.delete(userId)
+      }
+    })
+  }, [userStartTimes, activeUsers])
 
   const handleStart = useCallback(async () => {
     if (selectedUserIds.length === 0) {
@@ -28,16 +52,34 @@ function DrillCard({ drill, allUsers, onStart, onStop }: DrillCardProps) {
       return
     }
 
+    // Фільтруємо тільки неактивних користувачів
+    const activeUserIds = new Set(activeUsers.map(u => u.id))
+    const usersToStart = selectedUserIds.filter(id => !activeUserIds.has(id))
+
+    if (usersToStart.length === 0) {
+      alert('Всі обрані користувачі вже активні на цьому drill')
+      return
+    }
+
+    // Попередження якщо деякі користувачі вже активні
+    if (usersToStart.length < selectedUserIds.length) {
+      const skippedCount = selectedUserIds.length - usersToStart.length
+      const confirmStart = window.confirm(
+        `${skippedCount} користувач${skippedCount === 1 ? '' : 'ів'} вже активн${skippedCount === 1 ? 'ий' : 'і'} і буд${skippedCount === 1 ? 'е' : 'уть'} пропущен${skippedCount === 1 ? 'ий' : 'і'}. Продовжити?`
+      )
+      if (!confirmStart) return
+    }
+
     setIsStarting(true)
     try {
-      await onStart(drill.id, selectedUserIds)
+      await onStart(drill.id, usersToStart)
       setSelectedUserIds([]) // Очистити вибір після старту
     } catch (error) {
       console.error('Error starting drill:', error)
     } finally {
       setIsStarting(false)
     }
-  }, [drill.id, selectedUserIds, onStart])
+  }, [drill.id, selectedUserIds, activeUsers, onStart])
 
   const handleStop = useCallback(async () => {
     if (activeUsers.length === 0) return
@@ -87,15 +129,24 @@ function DrillCard({ drill, allUsers, onStart, onStop }: DrillCardProps) {
       {hasActiveUsers && (
         <div className="space-y-2 bg-gray-50 p-3 rounded-md">
           <p className="text-xs font-medium text-gray-500 uppercase">Активні користувачі:</p>
-          {activeUsers.map((user) => (
-            <UserTimer
-              key={user.id}
-              user={user}
-              startTimestamp={drill.createdAt} // Використовуємо createdAt як startedAt (це потрібно виправити на сервері, щоб повертати startedAt)
-              showBadge={true}
-              compact={true}
-            />
-          ))}
+          {activeUsers.map((user) => {
+            // Отримуємо час старту з кешу (стабільний) або з userStartTimes або fallback на поточний час
+            let startTimestamp = startTimesCache.current.get(user.id)
+            if (!startTimestamp) {
+              startTimestamp = userStartTimes?.get(user.id) ?? Date.now()
+              // Зберігаємо в кеш для наступних рендерів
+              startTimesCache.current.set(user.id, startTimestamp)
+            }
+            return (
+              <UserTimer
+                key={user.id}
+                user={user}
+                startTimestamp={startTimestamp}
+                showBadge={true}
+                compact={true}
+              />
+            )
+          })}
         </div>
       )}
 

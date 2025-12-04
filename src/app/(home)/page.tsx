@@ -1,9 +1,10 @@
 // Головна сторінка зі списком Drill
 "use client"
 
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useMemo } from 'react'
 import { useUsers } from '@/hooks/useUsers'
 import { useDrills } from '@/hooks/useDrills'
+import { useUserDrills } from '@/hooks/useUserDrills'
 import Header from '@/components/layout/Header'
 import DrillCard from '@/components/DrillCard'
 import CreateUserModal from '@/components/modals/CreateWorkerModal' // Перейменовано в CreateUserModal
@@ -13,11 +14,24 @@ import type { CreateUserRequest, CreateDrillRequest } from '@/types/api.types'
 export default function Home() {
   const { users, loading: usersLoading, addUser } = useUsers()
   const { drills, loading: drillsLoading, start, stop, addDrill } = useDrills()
+  const { userDrills: activeUserDrills, fetchUserDrills } = useUserDrills('active')
 
   const [isUserModalOpen, setIsUserModalOpen] = useState(false)
   const [isDrillModalOpen, setIsDrillModalOpen] = useState(false)
 
   const loading = usersLoading || drillsLoading
+
+  // Створюємо мапу: drillId -> userId -> startedAt
+  const userStartTimesMap = useMemo(() => {
+    const map = new Map<number, Map<number, number>>()
+    activeUserDrills.forEach((userDrill) => {
+      if (!map.has(userDrill.drillId)) {
+        map.set(userDrill.drillId, new Map())
+      }
+      map.get(userDrill.drillId)!.set(userDrill.userId, userDrill.startedAt)
+    })
+    return map
+  }, [activeUserDrills])
 
   const handleCreateUser = useCallback(
     async (data: CreateUserRequest) => {
@@ -36,15 +50,19 @@ export default function Home() {
   const handleStart = useCallback(
     async (drillId: number, userIds: number[]) => {
       await start({ drillId, userIds })
+      // Одразу оновлюємо activeUserDrills щоб отримати правильні startedAt часи
+      await fetchUserDrills(false)
     },
-    [start]
+    [start, fetchUserDrills]
   )
 
   const handleStop = useCallback(
     async (drillId: number, userIds: number[]) => {
       await stop({ drillId, userIds })
+      // Оновлюємо activeUserDrills після зупинки
+      await fetchUserDrills(false)
     },
-    [stop]
+    [stop, fetchUserDrills]
   )
 
   if (loading) {
@@ -101,6 +119,7 @@ export default function Home() {
                 key={drill.id}
                 drill={drill}
                 allUsers={users}
+                userStartTimes={userStartTimesMap.get(drill.id)}
                 onStart={handleStart}
                 onStop={handleStop}
               />
