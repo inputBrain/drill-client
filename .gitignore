@@ -39,3 +39,27 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+
+# Rider stuff (IDE)
+/.idea
+/.vscode
+*.DotSettings.user
+
+
+# build artifacts
+/bin
+/obj
+**/bin
+**/obj
+/.vs
+/log4net.config
+/.build/*
+
+/Library/*
+/Temp/*
+/Logs/*
+appsettings.json
+/src/generated/prisma
+.claude/*
+/nul
