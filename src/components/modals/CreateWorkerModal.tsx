@@ -1,15 +1,15 @@
 "use client"
 
 import { useState, FormEvent } from 'react'
-import type { CreateUserRequest } from '@/types/api.types'
+import type { ICreateUser } from '@/lib/api-client'
 
-interface CreateUserModalProps {
+interface ICreateUserModalProps {
   isOpen: boolean
   onClose: () => void
-  onSuccess: (data: CreateUserRequest) => Promise<void>
+  onSuccess: (data: ICreateUser) => Promise<void>
 }
 
-export default function CreateUserModal({ isOpen, onClose, onSuccess }: CreateUserModalProps) {
+export default function ICreateUserModal({ isOpen, onClose, onSuccess }: ICreateUserModalProps) {
   const [firstName, setFirstName] = useState('')
   const [lastName, setLastName] = useState('')
   const [email, setEmail] = useState('')

@@ -2,7 +2,7 @@
 "use client"
 
 import { memo, useState, useRef, useEffect } from 'react'
-import type { UserDto } from '@/types/api.types'
+import type { UserDto } from '@/lib/api-client'
 
 interface UserSelectorProps {
   users: UserDto[]
@@ -41,7 +41,7 @@ function UserSelector({
     }
   }
 
-  const selectedUsers = users.filter((u) => selectedUserIds.includes(u.id))
+  const selectedUsers = users.filter((u) => u.id && selectedUserIds.includes(u.id))
   const displayText =
     selectedUsers.length === 0
       ? label
@@ -75,8 +75,8 @@ function UserSelector({
                 >
                   <input
                     type="checkbox"
-                    checked={selectedUserIds.includes(user.id)}
-                    onChange={() => toggleUser(user.id)}
+                    checked={!!user.id && selectedUserIds.includes(user.id)}
+                    onChange={() => user.id && toggleUser(user.id)}
                     className="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
                   />
                   <span className="ml-2 text-sm text-gray-900">

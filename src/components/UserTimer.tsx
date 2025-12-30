@@ -2,7 +2,7 @@
 import React, { memo } from 'react'
 import { useTimer } from '@/hooks/useTimer'
 import StatusBadge from './StatusBadge'
-import type { UserDto } from '@/types/api.types'
+import type { UserDto } from '@/lib/api-client'
 
 interface UserTimerProps {
   user: UserDto

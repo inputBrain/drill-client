@@ -2,7 +2,7 @@
 "use client"
 
 import { memo, useMemo, useState, useEffect } from 'react'
-import type { UserDrillDto } from '@/types/api.types'
+import type { UserDrillDto } from '@/lib/api-client'
 import {
   formatDurationHMS,
   formatCost,
@@ -43,19 +43,21 @@ function ReportsSummary({ userDrills }: ReportsSummaryProps) {
     const summaryMap = new Map<number, DrillSummary>()
 
     userDrills.forEach((record) => {
+      if (!record.drillId) return
+
       const existing = summaryMap.get(record.drillId) || {
         drillId: record.drillId,
-        drillTitle: record.drill.title,
+        drillTitle: record.drill?.title ?? 'Unknown',
         totalSeconds: 0,
         totalCost: 0,
         sessionCount: 0,
       }
 
       const durationMinutes = calculateDurationMinutes(
-        record.startedAt,
+        record.startedAt ?? 0,
         record.stoppedAt ?? undefined
       )
-      const cost = calculateCost(durationMinutes, record.drill.pricePerMinute)
+      const cost = calculateCost(durationMinutes, record.drill?.pricePerMinute ?? 0)
 
       existing.totalSeconds += durationMinutes * 60
       existing.totalCost += cost

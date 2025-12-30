@@ -2,7 +2,7 @@
 "use client"
 
 import { memo, useState, useCallback, useRef, useEffect } from 'react'
-import type { DrillDto, UserDto } from '@/types/api.types'
+import type { DrillDto, UserDto } from '@/lib/api-client'
 import UserSelector from './UserSelector'
 import UserTimer from './UserTimer'
 import { formatCost } from '@/utils/date.utils'
@@ -70,6 +70,8 @@ function DrillCard({ drill, allUsers, userStartTimes, onStart, onStop }: DrillCa
       if (!confirmStart) return
     }
 
+    if (!drill.id) return
+
     setIsStarting(true)
     try {
       await onStart(drill.id, usersToStart)
@@ -92,9 +94,11 @@ function DrillCard({ drill, allUsers, userStartTimes, onStart, onStop }: DrillCa
       if (!confirmStop) return
     }
 
+    if (!drill.id) return
+
     setIsStopping(true)
     try {
-      const activeUserIds = activeUsers.map((u) => u.id)
+      const activeUserIds = activeUsers.map((u) => u.id).filter((id): id is number => id !== undefined)
       await onStop(drill.id, activeUserIds)
     } catch (error) {
       console.error('Error stopping drill:', error)
@@ -110,7 +114,7 @@ function DrillCard({ drill, allUsers, userStartTimes, onStart, onStop }: DrillCa
         <div>
           <h3 className="text-lg font-semibold text-gray-900">{drill.title}</h3>
           <p className="text-sm text-gray-600 mt-1">
-            {formatCost(drill.pricePerMinute)}/хв
+            {formatCost(drill.pricePerMinute ?? 0)}/хв
           </p>
         </div>
 
@@ -130,6 +134,8 @@ function DrillCard({ drill, allUsers, userStartTimes, onStart, onStop }: DrillCa
         <div className="space-y-2 bg-gray-50 p-3 rounded-md">
           <p className="text-xs font-medium text-gray-500 uppercase">Активні користувачі:</p>
           {activeUsers.map((user) => {
+            if (!user.id) return null
+
             // Отримуємо час старту з кешу (стабільний) або з userStartTimes або fallback на поточний час
             let startTimestamp = startTimesCache.current.get(user.id)
             if (!startTimestamp) {

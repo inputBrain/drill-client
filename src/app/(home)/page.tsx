@@ -7,9 +7,9 @@ import { useDrills } from '@/hooks/useDrills'
 import { useUserDrills } from '@/hooks/useUserDrills'
 import Header from '@/components/layout/Header'
 import DrillCard from '@/components/DrillCard'
-import CreateUserModal from '@/components/modals/CreateWorkerModal' // Перейменовано в CreateUserModal
+import CreateUserModal from '@/components/modals/CreateWorkerModal'
 import CreateDrillModal from '@/components/modals/CreateDrillModal'
-import type { CreateUserRequest, CreateDrillRequest } from '@/types/api.types'
+import type { ICreateUser, ICreateDrill } from '@/lib/api-client'
 
 export default function Home() {
   const { users, loading: usersLoading, addUser } = useUsers()
@@ -25,23 +25,25 @@ export default function Home() {
   const userStartTimesMap = useMemo(() => {
     const map = new Map<number, Map<number, number>>()
     activeUserDrills.forEach((userDrill) => {
-      if (!map.has(userDrill.drillId)) {
-        map.set(userDrill.drillId, new Map())
+      if (userDrill.drillId && userDrill.userId && userDrill.startedAt) {
+        if (!map.has(userDrill.drillId)) {
+          map.set(userDrill.drillId, new Map())
+        }
+        map.get(userDrill.drillId)!.set(userDrill.userId, userDrill.startedAt)
       }
-      map.get(userDrill.drillId)!.set(userDrill.userId, userDrill.startedAt)
     })
     return map
   }, [activeUserDrills])
 
   const handleCreateUser = useCallback(
-    async (data: CreateUserRequest) => {
+    async (data: ICreateUser) => {
       await addUser(data)
     },
     [addUser]
   )
 
   const handleCreateDrill = useCallback(
-    async (data: CreateDrillRequest) => {
+    async (data: ICreateDrill) => {
       await addDrill(data)
     },
     [addDrill]
@@ -115,14 +117,16 @@ export default function Home() {
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             {drills.map((drill) => (
-              <DrillCard
-                key={drill.id}
-                drill={drill}
-                allUsers={users}
-                userStartTimes={userStartTimesMap.get(drill.id)}
-                onStart={handleStart}
-                onStop={handleStop}
-              />
+              drill.id && (
+                <DrillCard
+                  key={drill.id}
+                  drill={drill}
+                  allUsers={users}
+                  userStartTimes={userStartTimesMap.get(drill.id)}
+                  onStart={handleStart}
+                  onStop={handleStop}
+                />
+              )
             ))}
           </div>
         )}

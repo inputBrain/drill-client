@@ -1,15 +1,15 @@
 "use client"
 
 import { useState, FormEvent } from 'react'
-import type { CreateDrillRequest } from '@/types/api.types'
+import type { ICreateDrill } from '@/lib/api-client'
 
-interface CreateDrillModalProps {
+interface ICreateDrillModalProps {
   isOpen: boolean
   onClose: () => void
-  onSuccess: (data: CreateDrillRequest) => Promise<void>
+  onSuccess: (data: ICreateDrill) => Promise<void>
 }
 
-export default function CreateDrillModal({ isOpen, onClose, onSuccess }: CreateDrillModalProps) {
+export default function ICreateDrillModal({ isOpen, onClose, onSuccess }: ICreateDrillModalProps) {
   const [title, setTitle] = useState('')
   const [pricePerMinute, setPricePerMinute] = useState('')
   const [isLoading, setIsLoading] = useState(false)

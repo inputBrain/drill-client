@@ -1,7 +1,7 @@
 // Hook для роботи з користувачами
 import { useState, useEffect, useCallback } from 'react'
-import { getUserList, createUser } from '@/api'
-import type { UserDto, CreateUserRequest } from '@/types/api.types'
+import { apiClient } from '@/lib/api-client'
+import type { UserDto, ICreateUser } from '@/lib/api-client'
 import { toast } from 'react-toastify'
 
 export function useUsers() {
@@ -13,7 +13,7 @@ export function useUsers() {
   const fetchUsers = useCallback(async () => {
     try {
       setLoading(true)
-      const data = await getUserList()
+      const data = await apiClient.listAllUsers()
       setUsers(data)
       setError(null)
     } catch (err: any) {
@@ -31,11 +31,14 @@ export function useUsers() {
   }, [fetchUsers])
 
   // Створити нового користувача
-  const addUser = useCallback(async (data: CreateUserRequest) => {
+  const addUser = useCallback(async (data: ICreateUser) => {
     try {
-      const newUser = await createUser(data)
-      setUsers((prev) => [...prev, newUser])
-      toast.success(`Користувача ${newUser.firstName} ${newUser.lastName} створено`)
+      const response = await apiClient.createUser(data as any)
+      const newUser = response?.user
+      if (newUser) {
+        setUsers((prev) => [...prev, newUser])
+        toast.success(`Користувача ${newUser?.firstName} ${newUser?.lastName} створено`)
+      }
       return newUser
     } catch (err: any) {
       const errorMsg = err?.message || 'Помилка створення користувача'

@@ -1,7 +1,7 @@
 // Hook для роботи з UserDrill (історія)
 import { useState, useEffect, useCallback } from 'react'
-import { getUserDrillList, getActiveUserDrills, getCompletedUserDrills } from '@/api'
-import type { UserDrillDto } from '@/types/api.types'
+import { apiClient } from '@/lib/api-client'
+import type { UserDrillDto } from '@/lib/api-client'
 import { toast } from 'react-toastify'
 
 type FilterType = 'all' | 'active' | 'completed'
@@ -20,11 +20,11 @@ export function useUserDrills(filter: FilterType = 'all') {
       let data: UserDrillDto[]
 
       if (filter === 'active') {
-        data = await getActiveUserDrills()
+        data = await apiClient.getActive()
       } else if (filter === 'completed') {
-        data = await getCompletedUserDrills()
+        data = await apiClient.getCompleted()
       } else {
-        data = await getUserDrillList()
+        data = await apiClient.listAll()
       }
 
       setUserDrills(data)

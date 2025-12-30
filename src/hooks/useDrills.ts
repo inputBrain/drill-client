@@ -1,12 +1,12 @@
 // Hook для роботи з drill
 import { useState, useEffect, useCallback } from 'react'
-import { getDrillList, createDrill, startDrill, stopDrill } from '@/api'
+import { apiClient } from '@/lib/api-client'
 import type {
   DrillDto,
-  CreateDrillRequest,
-  StartDrillRequest,
-  StopDrillRequest,
-} from '@/types/api.types'
+  ICreateDrill,
+  IStartDrill,
+  IStopDrill,
+} from '@/lib/api-client'
 import { toast } from 'react-toastify'
 
 export function useDrills() {
@@ -20,7 +20,7 @@ export function useDrills() {
       if (showLoading) {
         setLoading(true)
       }
-      const data = await getDrillList()
+      const data = await apiClient.listAllDrills()
       setDrills(data)
       setError(null)
     } catch (err: any) {
@@ -51,11 +51,14 @@ export function useDrills() {
   }, [fetchDrills])
 
   // Створити новий drill
-  const addDrill = useCallback(async (data: CreateDrillRequest) => {
+  const addDrill = useCallback(async (data: ICreateDrill) => {
     try {
-      const newDrill = await createDrill(data)
-      setDrills((prev) => [...prev, newDrill])
-      toast.success(`Drill "${newDrill.title}" створено`)
+      const response = await apiClient.createDrill(data as any)
+      const newDrill = response?.drill
+      if (newDrill) {
+        setDrills((prev) => [...prev, newDrill])
+        toast.success(`Drill "${newDrill?.title}" створено`)
+      }
       return newDrill
     } catch (err: any) {
       const errorMsg = err?.message || 'Помилка створення drill'
@@ -65,13 +68,16 @@ export function useDrills() {
   }, [])
 
   // Запустити drill для користувачів
-  const start = useCallback(async (data: StartDrillRequest) => {
+  const start = useCallback(async (data: IStartDrill) => {
     try {
-      const response = await startDrill(data)
+      const response = await apiClient.startDrill(data as any)
       // Оновити конкретний drill в списку
-      setDrills((prev) =>
-        prev.map((d) => (d.id === response.drill.id ? response.drill : d))
-      )
+      const updatedDrill = response?.drill
+      if (updatedDrill) {
+        setDrills((prev) =>
+          prev.map((d) => (d.id === updatedDrill.id ? updatedDrill : d))
+        )
+      }
       toast.success('Drill запущено')
       return response
     } catch (err: any) {
@@ -82,13 +88,16 @@ export function useDrills() {
   }, [])
 
   // Зупинити drill для користувачів
-  const stop = useCallback(async (data: StopDrillRequest) => {
+  const stop = useCallback(async (data: IStopDrill) => {
     try {
-      const response = await stopDrill(data)
+      const response = await apiClient.stopDrill(data as any)
       // Оновити конкретний drill в списку
-      setDrills((prev) =>
-        prev.map((d) => (d.id === response.drill.id ? response.drill : d))
-      )
+      const updatedDrill = response?.drill
+      if (updatedDrill) {
+        setDrills((prev) =>
+          prev.map((d) => (d.id === updatedDrill.id ? updatedDrill : d))
+        )
+      }
       toast.success('Drill зупинено')
       return response
     } catch (err: any) {

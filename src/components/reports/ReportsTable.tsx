@@ -2,7 +2,7 @@
 "use client"
 
 import { memo, useMemo, useState, useEffect } from 'react'
-import type { UserDrillDto } from '@/types/api.types'
+import type { UserDrillDto } from '@/lib/api-client'
 import {
   formatTimestampFull,
   formatDurationHMS,
@@ -20,7 +20,7 @@ interface ReportsTableProps {
 
 // Окремий компонент для активного рядка з таймером
 const ActiveRow = memo(({ record }: { record: UserDrillDto }) => {
-  const { formatted, durationSeconds } = useTimer(record.startedAt, record.stoppedAt)
+  const { formatted, durationSeconds } = useTimer(record.startedAt ?? 0, record.stoppedAt ?? undefined)
 
   const durationMinutes = useMemo(
     () => Math.floor(durationSeconds / 60),
@@ -28,20 +28,20 @@ const ActiveRow = memo(({ record }: { record: UserDrillDto }) => {
   )
 
   const cost = useMemo(
-    () => calculateCost(durationMinutes, record.drill.pricePerMinute),
-    [durationMinutes, record.drill.pricePerMinute]
+    () => calculateCost(durationMinutes, record.drill?.pricePerMinute ?? 0),
+    [durationMinutes, record.drill?.pricePerMinute]
   )
 
   return (
     <tr className="hover:bg-gray-50 transition-colors">
       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-        {record.user.firstName} {record.user.lastName}
+        {record.user?.firstName} {record.user?.lastName}
       </td>
       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-        {record.drill.title}
+        {record.drill?.title}
       </td>
       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-        {formatTimestampFull(record.startedAt)}
+        {formatTimestampFull(record.startedAt ?? 0)}
       </td>
       <td className="px-6 py-4 whitespace-nowrap text-sm">
         <StatusBadge active={true} />
@@ -50,7 +50,7 @@ const ActiveRow = memo(({ record }: { record: UserDrillDto }) => {
         {formatted}
       </td>
       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-        {formatCost(record.drill.pricePerMinute)}
+        {formatCost(record.drill?.pricePerMinute ?? 0)}
       </td>
       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
         {formatCost(cost)}
@@ -64,13 +64,13 @@ ActiveRow.displayName = 'ActiveRow'
 // Компонент для статичного рядка (завершеного)
 const CompletedRow = memo(({ record }: { record: UserDrillDto }) => {
   const durationMinutes = useMemo(
-    () => calculateDurationMinutes(record.startedAt, record.stoppedAt!),
-    [record.startedAt, record.stoppedAt]
+    () => calculateDurationMinutes(record.startedAt ?? 0, record.stoppedAt ?? 0),
+    [record.startedAt ?? 0, record.stoppedAt]
   )
 
   const cost = useMemo(
-    () => calculateCost(durationMinutes, record.drill.pricePerMinute),
-    [durationMinutes, record.drill.pricePerMinute]
+    () => calculateCost(durationMinutes, record.drill?.pricePerMinute ?? 0),
+    [durationMinutes, record.drill?.pricePerMinute]
   )
 
   const durationSeconds = durationMinutes * 60
@@ -79,13 +79,13 @@ const CompletedRow = memo(({ record }: { record: UserDrillDto }) => {
   return (
     <tr className="hover:bg-gray-50 transition-colors">
       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-        {record.user.firstName} {record.user.lastName}
+        {record.user?.firstName} {record.user?.lastName}
       </td>
       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-        {record.drill.title}
+        {record.drill?.title}
       </td>
       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-        {formatTimestampFull(record.startedAt)}
+        {formatTimestampFull(record.startedAt ?? 0)}
       </td>
       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
         {formatTimestampFull(record.stoppedAt!)}
@@ -94,7 +94,7 @@ const CompletedRow = memo(({ record }: { record: UserDrillDto }) => {
         {formattedDuration}
       </td>
       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-        {formatCost(record.drill.pricePerMinute)}
+        {formatCost(record.drill?.pricePerMinute ?? 0)}
       </td>
       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
         {formatCost(cost)}
@@ -111,7 +111,7 @@ function ReportsTable({ userDrills, groupedData }: ReportsTableProps) {
 
   // Сортуємо записи за часом (новіші зверху)
   const sortedRecords = useMemo(
-    () => [...userDrills].sort((a, b) => b.startedAt - a.startedAt),
+    () => [...userDrills].sort((a, b) => (b.startedAt ?? 0) - (a.startedAt ?? 0)),
     [userDrills]
   )
 
@@ -134,10 +134,10 @@ function ReportsTable({ userDrills, groupedData }: ReportsTableProps) {
 
     sortedRecords.forEach((record) => {
       const durationMinutes = calculateDurationMinutes(
-        record.startedAt,
+        record.startedAt ?? 0,
         record.stoppedAt ?? undefined
       )
-      const cost = calculateCost(durationMinutes, record.drill.pricePerMinute)
+      const cost = calculateCost(durationMinutes, record.drill?.pricePerMinute ?? 0)
       totalSeconds += durationMinutes * 60
       totalCost += cost
     })
@@ -162,17 +162,17 @@ function ReportsTable({ userDrills, groupedData }: ReportsTableProps) {
 
       records.forEach((record) => {
         const durationMinutes = calculateDurationMinutes(
-          record.startedAt,
+          record.startedAt ?? 0,
           record.stoppedAt ?? undefined
         )
-        const cost = calculateCost(durationMinutes, record.drill.pricePerMinute)
+        const cost = calculateCost(durationMinutes, record.drill?.pricePerMinute ?? 0)
         totalSeconds += durationMinutes * 60
         totalCost += cost
       })
 
       summaries[key] = {
-        userName: `${firstRecord.user.firstName} ${firstRecord.user.lastName}`,
-        drillName: firstRecord.drill.title,
+        userName: `${firstRecord.user?.firstName ?? ''} ${firstRecord.user?.lastName ?? ''}`.trim(),
+        drillName: firstRecord.drill?.title ?? '',
         totalSeconds,
         totalCost,
       }
