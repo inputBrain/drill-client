@@ -605,8 +605,8 @@ export class ApiClient {
 }
 
 export class CreateDrill implements ICreateDrill {
-    title?: string | undefined;
-    pricePerMinute?: number;
+    title!: string;
+    pricePerMinute!: number;
 
     constructor(data?: ICreateDrill) {
         if (data) {
@@ -640,8 +640,8 @@ export class CreateDrill implements ICreateDrill {
 }
 
 export interface ICreateDrill {
-    title?: string | undefined;
-    pricePerMinute?: number;
+    title: string;
+    pricePerMinute: number;
 }
 
 export class CreateDrillResponse implements ICreateDrillResponse {
@@ -681,9 +681,9 @@ export interface ICreateDrillResponse {
 }
 
 export class CreateUser implements ICreateUser {
-    email?: string | undefined;
-    firstName?: string | undefined;
-    lastName?: string | undefined;
+    email!: string;
+    firstName!: string;
+    lastName!: string;
 
     constructor(data?: ICreateUser) {
         if (data) {
@@ -719,9 +719,9 @@ export class CreateUser implements ICreateUser {
 }
 
 export interface ICreateUser {
-    email?: string | undefined;
-    firstName?: string | undefined;
-    lastName?: string | undefined;
+    email: string;
+    firstName: string;
+    lastName: string;
 }
 
 export class CreateUserResponse implements ICreateUserResponse {
@@ -873,11 +873,11 @@ export interface IDeleteUserDrill {
 }
 
 export class DrillDto implements IDrillDto {
-    id?: number;
-    title?: string | undefined;
-    pricePerMinute?: number;
-    createdAt?: number;
-    users?: UserDto[] | undefined;
+    id!: number;
+    title!: string;
+    pricePerMinute!: number;
+    createdAt!: number;
+    users!: UserDto[];
 
     constructor(data?: IDrillDto) {
         if (data) {
@@ -885,6 +885,9 @@ export class DrillDto implements IDrillDto {
                 if (data.hasOwnProperty(property))
                     (this as any)[property] = (data as any)[property];
             }
+        }
+        if (!data) {
+            this.users = [];
         }
     }
 
@@ -925,16 +928,16 @@ export class DrillDto implements IDrillDto {
 }
 
 export interface IDrillDto {
-    id?: number;
-    title?: string | undefined;
-    pricePerMinute?: number;
-    createdAt?: number;
-    users?: UserDto[] | undefined;
+    id: number;
+    title: string;
+    pricePerMinute: number;
+    createdAt: number;
+    users: UserDto[];
 }
 
 export class StartDrill implements IStartDrill {
-    userIds?: number[] | undefined;
-    drillId?: number;
+    userIds!: number[];
+    drillId!: number;
 
     constructor(data?: IStartDrill) {
         if (data) {
@@ -942,6 +945,9 @@ export class StartDrill implements IStartDrill {
                 if (data.hasOwnProperty(property))
                     (this as any)[property] = (data as any)[property];
             }
+        }
+        if (!data) {
+            this.userIds = [];
         }
     }
 
@@ -976,8 +982,8 @@ export class StartDrill implements IStartDrill {
 }
 
 export interface IStartDrill {
-    userIds?: number[] | undefined;
-    drillId?: number;
+    userIds: number[];
+    drillId: number;
 }
 
 export class StartDrillResponse implements IStartDrillResponse {
@@ -1017,8 +1023,8 @@ export interface IStartDrillResponse {
 }
 
 export class StopDrill implements IStopDrill {
-    userIds?: number[] | undefined;
-    drillId?: number;
+    userIds!: number[];
+    drillId!: number;
 
     constructor(data?: IStopDrill) {
         if (data) {
@@ -1026,6 +1032,9 @@ export class StopDrill implements IStopDrill {
                 if (data.hasOwnProperty(property))
                     (this as any)[property] = (data as any)[property];
             }
+        }
+        if (!data) {
+            this.userIds = [];
         }
     }
 
@@ -1060,8 +1069,8 @@ export class StopDrill implements IStopDrill {
 }
 
 export interface IStopDrill {
-    userIds?: number[] | undefined;
-    drillId?: number;
+    userIds: number[];
+    drillId: number;
 }
 
 export class StopDrillResponse implements IStopDrillResponse {
@@ -1183,8 +1192,8 @@ export interface IUpdateDrillResponse {
 export class UpdateUser implements IUpdateUser {
     userId!: number;
     email?: string | undefined;
-    firstName?: string | undefined;
-    lastName?: string | undefined;
+    firstName!: string;
+    lastName!: string;
 
     constructor(data?: IUpdateUser) {
         if (data) {
@@ -1224,8 +1233,8 @@ export class UpdateUser implements IUpdateUser {
 export interface IUpdateUser {
     userId: number;
     email?: string | undefined;
-    firstName?: string | undefined;
-    lastName?: string | undefined;
+    firstName: string;
+    lastName: string;
 }
 
 export class UpdateUserResponse implements IUpdateUserResponse {
@@ -1265,13 +1274,13 @@ export interface IUpdateUserResponse {
 }
 
 export class UserDrillDto implements IUserDrillDto {
-    id?: number;
-    userId?: number;
-    user?: UserDto;
-    drillId?: number;
-    drill?: DrillDto;
-    startedAt?: number;
-    stoppedAt?: number | undefined;
+    id!: number;
+    userId!: number;
+    user!: UserDto;
+    drillId!: number;
+    drill!: DrillDto;
+    startedAt!: number;
+    stoppedAt!: number;
 
     constructor(data?: IUserDrillDto) {
         if (data) {
@@ -1280,15 +1289,19 @@ export class UserDrillDto implements IUserDrillDto {
                     (this as any)[property] = (data as any)[property];
             }
         }
+        if (!data) {
+            this.user = new UserDto();
+            this.drill = new DrillDto();
+        }
     }
 
     init(_data?: any) {
         if (_data) {
             this.id = _data["id"];
             this.userId = _data["userId"];
-            this.user = _data["user"] ? UserDto.fromJS(_data["user"]) : undefined as any;
+            this.user = _data["user"] ? UserDto.fromJS(_data["user"]) : new UserDto();
             this.drillId = _data["drillId"];
-            this.drill = _data["drill"] ? DrillDto.fromJS(_data["drill"]) : undefined as any;
+            this.drill = _data["drill"] ? DrillDto.fromJS(_data["drill"]) : new DrillDto();
             this.startedAt = _data["startedAt"];
             this.stoppedAt = _data["stoppedAt"];
         }
@@ -1315,21 +1328,21 @@ export class UserDrillDto implements IUserDrillDto {
 }
 
 export interface IUserDrillDto {
-    id?: number;
-    userId?: number;
-    user?: UserDto;
-    drillId?: number;
-    drill?: DrillDto;
-    startedAt?: number;
-    stoppedAt?: number | undefined;
+    id: number;
+    userId: number;
+    user: UserDto;
+    drillId: number;
+    drill: DrillDto;
+    startedAt: number;
+    stoppedAt: number;
 }
 
 export class UserDto implements IUserDto {
-    id?: number;
-    email?: string | undefined;
-    firstName?: string | undefined;
-    lastName?: string | undefined;
-    createdAt?: number;
+    id!: number;
+    email!: string;
+    firstName!: string;
+    lastName!: string;
+    createdAt!: number;
 
     constructor(data?: IUserDto) {
         if (data) {
@@ -1369,11 +1382,11 @@ export class UserDto implements IUserDto {
 }
 
 export interface IUserDto {
-    id?: number;
-    email?: string | undefined;
-    firstName?: string | undefined;
-    lastName?: string | undefined;
-    createdAt?: number;
+    id: number;
+    email: string;
+    firstName: string;
+    lastName: string;
+    createdAt: number;
 }
 
 export class ApiException extends Error {
